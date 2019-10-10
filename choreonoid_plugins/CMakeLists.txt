@@ -97,7 +97,9 @@ catkin_package(
   camera_info_manager
 )
 
-option(ENABLE_PYTHON "" ON)
+# option(ENABLE_PYTHON "" ON)
+set(ENABLE_PYTHON OFF)
+
 
 if (CMAKE_VERSION VERSION_LESS "3.1")
   if (CMAKE_COMPILER_IS_GNUCXX)
@@ -132,10 +134,10 @@ function(add_cnoid_plugin)
     endif()
   endif()
 
-#  set_target_properties(${ARGV0} PROPERTIES
-#    LIBRARY_OUTPUT_DIRECTORY ${CNOID_PLUGIN_SUBDIR}
-#    ARCHIVE_OUTPUT_DIRECTORY ${CNOID_PLUGIN_SUBDIR}
-#    RUNTIME_OUTPUT_DIRECTORY ${CNOID_PLUGIN_SUBDIR})
+  set_target_properties(${ARGV0} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CNOID_PLUGIN_SUBDIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${CNOID_PLUGIN_SUBDIR}
+    RUNTIME_OUTPUT_DIRECTORY ${CNOID_PLUGIN_SUBDIR})
 
   if(ENABLE_INSTALL_RPATH)
     if(APPLE)
@@ -157,7 +159,7 @@ endfunction()
 if(ENABLE_PYTHON)
 
   find_package(PythonLibs 2.7 REQUIRED)
-  include_directories(${PYTHON_INCLUDE_PATH})
+  include_directories(${PYTHON_INCLUDE_PATH} /usr/local/include/python2.7)
   set(CNOID_PYTHON_SUBDIR ${CNOID_PLUGIN_SUBDIR}/python)
 
   function(add_cnoid_python_module)
@@ -203,27 +205,27 @@ add_cnoid_plugin(CnoidRosBodyPlugin
 
 target_link_libraries(CnoidRosBodyPlugin ${CNOID_LIBRARIES} CnoidBodyPlugin ${catkin_LIBRARIES})
 
-install(TARGETS 
-  CnoidRosBodyPlugin
-  RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}
-  LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}
-  ARCHIVE DESTINATION ${CNOID_PLUGIN_SUBDIR}
-)
+# install(TARGETS
+#   CnoidRosBodyPlugin
+#   RUNTIME DESTINATION ${CNOID_PLUGIN_SUBDIR}
+#   LIBRARY DESTINATION ${CNOID_PLUGIN_SUBDIR}
+#   ARCHIVE DESTINATION ${CNOID_PLUGIN_SUBDIR}
+# )
 
-install(
-  DIRECTORY src/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  USE_SOURCE_PERMISSIONS
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN "choreonoid_plugins" EXCLUDE
-  PATTERN "python" EXCLUDE
-)
+# install(
+#   DIRECTORY src/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   USE_SOURCE_PERMISSIONS
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN "choreonoid_plugins" EXCLUDE
+#   PATTERN "python" EXCLUDE
+# )
 
-install(
-  DIRECTORY test
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  USE_SOURCE_PERMISSIONS
-)
+# install(
+#   DIRECTORY test
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+#   USE_SOURCE_PERMISSIONS
+# )
 
 if(ENABLE_PYTHON)
   add_subdirectory(src/python)

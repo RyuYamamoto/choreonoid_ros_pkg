@@ -5,6 +5,7 @@
 #include <cnoid/ItemManager>
 #include <cnoid/MessageView>
 #include <ros/console.h>
+#include <geometry_msgs/Point32.h>
 
 using namespace cnoid;
 
@@ -68,10 +69,10 @@ void BodyRosItem::doPutProperties(PutPropertyFunction& putProperty)
 bool BodyRosItem::initialize(Target* target)
 {
   if (! target) {
-    MessageView::instance()->putln(MessageView::ERROR, boost::format("Target not found"));
+    MessageView::instance()->putln(MessageView::ERROR, "Target not found");
     return false;
   } else if (! target->body()) {
-    MessageView::instance()->putln(MessageView::ERROR, boost::format("BodyItem not found"));
+    MessageView::instance()->putln(MessageView::ERROR, "BodyItem not found");
     return false;
   }
 
@@ -236,12 +237,12 @@ void BodyRosItem::updateForceSensor(ForceSensor* sensor, ros::Publisher& publish
   geometry_msgs::WrenchStamped force;
   force.header.stamp.fromSec(controllerTarget->currentTime());
   force.header.frame_id = sensor->name();
-  force.wrench.force.x = sensor->F()[0];
-  force.wrench.force.y = sensor->F()[1];
-  force.wrench.force.z = sensor->F()[2];
-  force.wrench.torque.x = sensor->F()[3];
-  force.wrench.torque.y = sensor->F()[4];
-  force.wrench.torque.z = sensor->F()[5];
+  force.wrench.force.x = sensor->F()[0] / 1000.0;
+  force.wrench.force.y = sensor->F()[1] / 1000.0;
+  force.wrench.force.z = sensor->F()[2] / 1000.0;
+  force.wrench.torque.x = sensor->F()[3] / 1000.0;
+  force.wrench.torque.y = sensor->F()[4] / 1000.0;
+  force.wrench.torque.z = sensor->F()[5] / 1000.0;
   publisher.publish(force);
 }
 
@@ -261,9 +262,9 @@ void BodyRosItem::updateAccelSensor(AccelerationSensor* sensor, ros::Publisher& 
   sensor_msgs::Imu accel;
   accel.header.stamp.fromSec(controllerTarget->currentTime());
   accel.header.frame_id = sensor->name();
-  accel.linear_acceleration.x = sensor->dv()[0];
-  accel.linear_acceleration.y = sensor->dv()[1];
-  accel.linear_acceleration.z = sensor->dv()[2];
+  accel.linear_acceleration.x = sensor->dv()[0] / 10.0;
+  accel.linear_acceleration.y = sensor->dv()[1] / 10.0;
+  accel.linear_acceleration.z = sensor->dv()[2] / 10.0;
   publisher.publish(accel);
 }
 
@@ -287,6 +288,7 @@ void BodyRosItem::updateVisionSensor(Camera* sensor, image_transport::Publisher&
   std::memcpy(&(vision.data[0]), &(sensor->image().pixels()[0]), vision.step * vision.height);
   publisher.publish(vision);
 }
+
 
 void BodyRosItem::updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher)
 {
@@ -420,6 +422,10 @@ void BodyRosItem::stop_publish()
     range_sensor_publishers_[i].shutdown();
   }
 
+  for (i = 0; i < range_sensor_pc_publishers_.size(); i++) {
+    range_sensor_pc_publishers_[i].shutdown();
+  }
+  
   return;
 }
 
