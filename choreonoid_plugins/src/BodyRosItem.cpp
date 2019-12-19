@@ -195,6 +195,7 @@ bool BodyRosItem::createSensors(BodyPtr body)
       ROS_INFO("Create RGBD sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
     }
   }
+  /*
   range_sensor_publishers_.resize(rangeSensors_.size());
   for (size_t i=0; i < rangeSensors_.size(); ++i) {
     if (RangeSensor* sensor = rangeSensors_[i]) {
@@ -204,6 +205,18 @@ bool BodyRosItem::createSensors(BodyPtr body)
       sensor->sigStateChanged().connect(boost::bind(&BodyRosItem::updateRangeSensor,
                                                     this, sensor, range_sensor_publishers_[i]));
       ROS_INFO("Create range sensor %s with cycle %f", sensor->name().c_str(), sensor->cycle());
+    }
+  }
+  */
+  // Velodyne Sensor
+  velodyne_sensor_publishers_.resize(rangeSensors_.size());
+  for(size_t i=0; i < rangeSensors_.size(); ++i) {
+    if (RangeSensor* sensor = rangeSensors_[i]) {
+      std::string name = sensor->name();
+      std::replace(name.begin(), name.end(), '-', '_');
+      velodyne_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud>(name, 1);
+      sensor->sigStateChanged().connect(boost::bind(&BodyRosItem::updateVelodyneSensor,
+                                                    this, sensor, velodyne_sensor_publishers_[i]));
     }
   }
 }
@@ -384,6 +397,38 @@ void BodyRosItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
   publisher.publish(range);
 }
 
+void BodyRosItem::updateVelodyneSensor(RangeSensor* sensor, ros::Publisher& publisher)
+{
+  sensor_msgs::PointCloud velodyne;
+  velodyne.header.stamp.fromSec(controllerTarget->currentTime());
+  velodyne.header.frame_id = sensor->name();
+
+        const int numPitchSamples = sensor->numPitchSamples();
+        const double pitchStep = sensor->pitchStep();
+        const int numYawSamples = sensor->numYawSamples();
+        const double yawStep = sensor->yawStep();
+        
+        for(int pitch=0; pitch < numPitchSamples; ++pitch){
+            const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
+            const double cosPitchAngle = cos(pitchAngle);
+            const int srctop = pitch * numYawSamples;
+            
+            for(int yaw=0; yaw < numYawSamples; ++yaw){
+              const RangeSensor::RangeData& src = sensor->constRangeData();
+              const double distance = src[srctop + yaw];
+              if(distance <= sensor->maxDistance()){
+                geometry_msgs::Point32 point;
+                double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
+                point.x = distance *  cosPitchAngle * sin(-yawAngle);
+                point.y  = distance * sin(pitchAngle);
+                point.z  = -distance * cosPitchAngle * cos(yawAngle);
+                velodyne.points.push_back(point);
+              }
+            }
+        }
+    publisher.publish(velodyne);
+}
+
 void BodyRosItem::input()
 {
   
@@ -418,12 +463,14 @@ void BodyRosItem::stop_publish()
     range_vision_sensor_publishers_[i].shutdown();
   }
 
+  /*
   for (i = 0; i < range_sensor_publishers_.size(); i++) {
     range_sensor_publishers_[i].shutdown();
   }
+  */
 
-  for (i = 0; i < range_sensor_pc_publishers_.size(); i++) {
-    range_sensor_pc_publishers_[i].shutdown();
+  for (i = 0; i < velodyne_sensor_publishers_.size(); i++) {
+    velodyne_sensor_publishers_[i].shutdown();
   }
   
   return;
