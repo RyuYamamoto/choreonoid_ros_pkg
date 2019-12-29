@@ -403,30 +403,30 @@ void BodyRosItem::updateVelodyneSensor(RangeSensor* sensor, ros::Publisher& publ
   velodyne.header.stamp.fromSec(controllerTarget->currentTime());
   velodyne.header.frame_id = sensor->name();
 
-        const int numPitchSamples = sensor->numPitchSamples();
-        const double pitchStep = sensor->pitchStep();
-        const int numYawSamples = sensor->numYawSamples();
-        const double yawStep = sensor->yawStep();
-        
-        for(int pitch=0; pitch < numPitchSamples; ++pitch){
-            const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
-            const double cosPitchAngle = cos(pitchAngle);
-            const int srctop = pitch * numYawSamples;
-            
-            for(int yaw=0; yaw < numYawSamples; ++yaw){
-              const RangeSensor::RangeData& src = sensor->constRangeData();
-              const double distance = src[srctop + yaw];
-              if(distance <= sensor->maxDistance()){
-                geometry_msgs::Point32 point;
-                double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
-                point.x = distance *  cosPitchAngle * sin(-yawAngle);
-                point.y  = distance * sin(pitchAngle);
-                point.z  = -distance * cosPitchAngle * cos(yawAngle);
-                velodyne.points.push_back(point);
-              }
-            }
-        }
-    publisher.publish(velodyne);
+  const int numPitchSamples = sensor->numPitchSamples();
+  const double pitchStep = sensor->pitchStep();
+  const int numYawSamples = sensor->numYawSamples();
+  const double yawStep = sensor->yawStep();
+
+  for(int pitch=0; pitch < numPitchSamples; ++pitch){
+    const double pitchAngle = pitch * pitchStep - sensor->pitchRange() / 2.0;
+    const double cosPitchAngle = cos(pitchAngle);
+    const int srctop = pitch * numYawSamples;
+
+    for(int yaw=0; yaw < numYawSamples; ++yaw){
+      const RangeSensor::RangeData& src = sensor->constRangeData();
+      const double distance = src[srctop + yaw];
+      if(distance <= sensor->maxDistance()){
+        geometry_msgs::Point32 point;
+        double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
+        point.x = distance *  cosPitchAngle * sin(-yawAngle);
+        point.y  = distance * sin(pitchAngle);
+        point.z  = -distance * cosPitchAngle * cos(yawAngle);
+        velodyne.points.push_back(point);
+      }
+    }
+  }
+  publisher.publish(velodyne);
 }
 
 void BodyRosItem::input()
