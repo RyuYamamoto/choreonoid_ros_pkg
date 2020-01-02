@@ -22,6 +22,8 @@
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/WrenchStamped.h>
 
+#include <pcl_ros/point_cloud.h>
+
 #include <image_transport/image_transport.h>
 
 #include <vector>
@@ -99,7 +101,7 @@ private:
     std::vector<image_transport::Publisher> vision_sensor_publishers_;
     std::vector<ros::Publisher> range_vision_sensor_publishers_;
     std::vector<ros::Publisher> range_sensor_publishers_;
-    std::vector<ros::Publisher> range_sensor_pc_publishers_;
+    std::vector<ros::Publisher> velodyne_sensor_publishers_;
 
     void updateForceSensor(ForceSensor* sensor, ros::Publisher& publisher);
     void updateRateGyroSensor(RateGyroSensor* sensor, ros::Publisher& publisher);
@@ -107,6 +109,7 @@ private:
     void updateVisionSensor(Camera* sensor, image_transport::Publisher& publisher);
     void updateRangeVisionSensor(RangeCamera* sensor, ros::Publisher& publisher);
     void updateRangeSensor(RangeSensor* sensor, ros::Publisher& publisher);
+    void updateVelodyneSensor(RangeSensor* sensor, ros::Publisher& publisher);
 
     /**
       @brief Stop publish.
