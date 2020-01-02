@@ -214,7 +214,7 @@ bool BodyRosItem::createSensors(BodyPtr body)
     if (RangeSensor* sensor = rangeSensors_[i]) {
       std::string name = sensor->name();
       std::replace(name.begin(), name.end(), '-', '_');
-      velodyne_sensor_publishers_[i] = rosnode_->advertise<sensor_msgs::PointCloud>(name, 1);
+      velodyne_sensor_publishers_[i] = rosnode_->advertise<pcl::PointCloud<pcl::PointXYZ> >(name, 1);
       sensor->sigStateChanged().connect(boost::bind(&BodyRosItem::updateVelodyneSensor,
                                                     this, sensor, velodyne_sensor_publishers_[i]));
     }
@@ -399,9 +399,7 @@ void BodyRosItem::updateRangeSensor(RangeSensor* sensor, ros::Publisher& publish
 
 void BodyRosItem::updateVelodyneSensor(RangeSensor* sensor, ros::Publisher& publisher)
 {
-  sensor_msgs::PointCloud velodyne;
-  velodyne.header.stamp.fromSec(controllerTarget->currentTime());
-  velodyne.header.frame_id = sensor->name();
+  pcl::PointCloud<pcl::PointXYZ> velodyne;
 
   const int numPitchSamples = sensor->numPitchSamples();
   const double pitchStep = sensor->pitchStep();
@@ -417,7 +415,7 @@ void BodyRosItem::updateVelodyneSensor(RangeSensor* sensor, ros::Publisher& publ
       const RangeSensor::RangeData& src = sensor->constRangeData();
       const double distance = src[srctop + yaw];
       if(distance <= sensor->maxDistance()){
-        geometry_msgs::Point32 point;
+        pcl::PointXYZ point;
         double yawAngle = yaw * yawStep - sensor->yawRange() / 2.0;
         point.x = distance *  cosPitchAngle * sin(-yawAngle);
         point.y  = distance * sin(pitchAngle);
@@ -426,7 +424,12 @@ void BodyRosItem::updateVelodyneSensor(RangeSensor* sensor, ros::Publisher& publ
       }
     }
   }
-  publisher.publish(velodyne);
+
+  auto msg = velodyne.makeShared();
+  msg->header.frame_id = sensor->name();
+  pcl_conversions::toPCL(ros::Time::now(), msg->header.stamp);
+
+  publisher.publish(msg);
 }
 
 void BodyRosItem::input()

@@ -31,6 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs 
   tf 
   tf2_ros 
+  pcl_ros
   dynamic_reconfigure 
   rosgraph_msgs 
   trajectory_msgs 
