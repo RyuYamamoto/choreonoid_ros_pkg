@@ -10,6 +10,7 @@
 
 #include <cnoid/YAMLReader>
 #include <cnoid/FileUtil>
+#include <cnoid/PutPropertyFunction>
 
 namespace cnoid {
 
